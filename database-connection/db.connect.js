@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const dbUserName = process.env.DB_USERNAME;
 const dbPassword = encodeURIComponent(process.env.DB_PASSWORD);
@@ -11,9 +11,9 @@ const connectDB = async () => {
     await mongoose.connect(
       `mongodb+srv://${dbUserName}:${dbPassword}@${dbHost}/${dbName}?${dbOptions}`
     );
-    console.log("DB connection established...");
+    console.log('DB connection established...');
   } catch (error) {
-    console.log("DB connection failed...");
+    console.log('DB connection failed...');
     console.log(error.message);
     process.exit(1); //1 => exit with error
   }

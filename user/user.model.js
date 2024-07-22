@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-// set schema rule
+// set schema/rule/structure
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -19,13 +19,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    maxlength: 55,
+    maxlength: 30,
   },
   lastName: {
     type: String,
     required: true,
     trim: true,
-    maxlength: 55,
+    maxlength: 30,
   },
   gender: {
     type: String,
@@ -39,14 +39,14 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+//  to remove password field while converting to JSON
 userSchema.methods.toJSON = function () {
-  var obj = this.toObject(); //or var obj = this;
+  let obj = this.toObject();
   delete obj.password;
   return obj;
 };
 
 // create table/collection/model
-
-const User = mongoose.model("user", userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;
