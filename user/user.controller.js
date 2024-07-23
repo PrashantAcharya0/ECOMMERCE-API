@@ -58,7 +58,7 @@ router.post(
   }
 );
 
-// * login
+// * user login
 router.post(
   "/user/login",
   validateReqBody(loginUserValidationSchema),
