@@ -163,7 +163,7 @@ router.post(
 
     const products = await Product.aggregate([
       {
-        $match: { sellerId: req, loggedInUserId },
+        $match: match,
       },
       { $skip: skip },
       { $limit: limit },
@@ -181,4 +181,5 @@ router.post(
     return res.status(200).send("seller list...");
   }
 );
+
 export default router;
