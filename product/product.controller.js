@@ -1,8 +1,11 @@
 import express from "express";
-import { isSeller } from "../middleware/authentication.middleware.js";
+import { isSeller, isUser } from "../middleware/authentication.middleware.js";
 import Product from "./product.model.js";
 import validateReqBody from "../middleware/validate.req.body.js";
-import { addProductValidationSchema } from "./product.validation.js";
+import {
+  addProductValidationSchema,
+  paginationDateValidationSchema,
+} from "./product.validation.js";
 import validateMongoIdFromParam from "../middleware/validate.mongo.id.js";
 import checkMongoIdsEquality from "../utlis/mongo.id.equality.js";
 
@@ -19,8 +22,9 @@ router.post(
 
     // add seller Id
     newProduct.sellerId = req.loggedInUserId;
+    console.log(newProduct);
 
-    // add product
+    // add/save product
     await Product.create(newProduct);
 
     // send res
@@ -116,4 +120,65 @@ router.put(
   }
 );
 
+// * get product details
+router.get(
+  "/product/detail/:id",
+  isUser,
+  validateMongoIdFromParam,
+  async (req, res) => {
+    //extract product from req.params
+    const productId = req.params;
+
+    // find product using product id
+    const product = await Product.findOne({ productId });
+
+    // if not product , throw error
+    if (!product) {
+      return res.status(400), send({ message: "Product does not exist." });
+    }
+
+    //send res
+    return res.status(200).send({ message: "Product details..." });
+  }
+);
+
+// * list product by seller
+router.post(
+  "/product/seller/list",
+  isSeller,
+  validateReqBody(paginationDateValidationSchema),
+  async (req, res) => {
+    //extract pagintion data  from req.params
+    const { page, list } = req.body;
+
+    // calculate skip
+    const skip = (page - 1) * limit;
+
+    // condition
+    let match = { sellerId: req.loggedInUserId };
+
+    if (searchText) {
+      match.name = { $regex: searchText, $option: "i" };
+    }
+
+    const products = await Product.aggregate([
+      {
+        $match: { sellerId: req, loggedInUserId },
+      },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          name: 1,
+          price: 1,
+          brand: 1,
+          image: 1,
+          description: 1,
+        },
+      },
+    ]);
+
+    return res.status(200).send("seller list...");
+  }
+);
 export default router;
