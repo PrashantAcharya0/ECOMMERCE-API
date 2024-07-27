@@ -1,5 +1,9 @@
 import express from "express";
-import { isSeller, isUser } from "../middleware/authentication.middleware.js";
+import {
+  isBuyer,
+  isSeller,
+  isUser,
+} from "../middleware/authentication.middleware.js";
 import Product from "./product.model.js";
 import validateReqBody from "../middleware/validate.req.body.js";
 import {
@@ -32,6 +36,15 @@ router.post(
   }
 );
 
+// * list all products
+router.get("/product/list", isUser, async (req, res) => {
+  // find all products
+  const products = await Product.find();
+
+  // send res
+  return res.status(200).send({ message: "success", productList: products });
+});
+
 // * delete product
 router.delete(
   "/product/delete/:id",
@@ -49,9 +62,7 @@ router.delete(
       return res.status(404).send({ message: "Product does not exist." });
     }
     // check if loggedInUserId id owner of the product
-    // const isProductOwner = product.sellerId.equals(req.loggedInUserId);
-    //or
-    const isProductOwner = String(product.sellerId) === String(sell);
+    const isProductOwner = product.sellerId.equals(req.loggedInUserId);
 
     // console.log(isProductOwner);
     // if not owner, throw error
@@ -127,18 +138,23 @@ router.get(
   validateMongoIdFromParam,
   async (req, res) => {
     //extract product from req.params
-    const productId = req.params;
+    const productId = req.params.id;
+
+    console.log(productId);
 
     // find product using product id
-    const product = await Product.findOne({ productId });
+    const product = await Product.findOne({ _id: productId });
+    console.log(product);
 
     // if not product , throw error
     if (!product) {
-      return res.status(400), send({ message: "Product does not exist." });
+      return res.status(400).send({ message: "Product does not exist." });
     }
 
     //send res
-    return res.status(200).send({ message: "Product details..." });
+    return res
+      .status(200)
+      .send({ message: "Product details...", productDetail: product });
   }
 );
 
@@ -149,7 +165,7 @@ router.post(
   validateReqBody(paginationDateValidationSchema),
   async (req, res) => {
     //extract pagintion data  from req.params
-    const { page, list } = req.body;
+    const { page, limit, searchText } = req.body;
 
     // calculate skip
     const skip = (page - 1) * limit;
@@ -178,8 +194,51 @@ router.post(
       },
     ]);
 
-    return res.status(200).send("seller list...");
+    return res
+      .status(200)
+      .send({ message: "seller list...", productList: products });
   }
 );
 
+// * list product by buyer
+router.post(
+  "/product/buyer/list",
+  isBuyer,
+  validateReqBody(paginationDateValidationSchema),
+  async (req, res) => {
+    //extract pagintion data  from req.params
+    const { page, limit, searchText } = req.body;
+
+    let match = {};
+
+    if (searchText) {
+      match.name = { $regex: searchText, $option: "i" };
+    }
+
+    // calculate skip
+    const skip = (page - 1) * limit;
+
+    // find product
+    const products = await Product.aggregate([
+      {
+        $match: match,
+      },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          name: 1,
+          price: 1,
+          brand: 1,
+          image: 1,
+          description: 1,
+        },
+      },
+    ]);
+
+    return res
+      .status(200)
+      .send({ message: "buyer list...", productList: products });
+  }
+);
 export default router;
