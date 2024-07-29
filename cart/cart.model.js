@@ -1,4 +1,3 @@
-import { OrderedBulkOperation } from "mongodb";
 import mongoose from "mongoose";
 
 // set schema
@@ -14,7 +13,7 @@ const cartSchema = new mongoose.Schema({
     ref: "Product",
     required: true,
   },
-  OrderedQuantity: {
+  orderedQuantity: {
     type: Number,
     min: 1,
     required: true,
@@ -22,3 +21,5 @@ const cartSchema = new mongoose.Schema({
 });
 
 // create model
+const Cart = mongoose.model("Cart", cartSchema);
+export default Cart;
