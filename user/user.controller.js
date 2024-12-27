@@ -1,18 +1,18 @@
-import express from "express";
+import express from 'express';
 import {
   loginUserValidationSchema,
   userValidationSchema,
-} from "./user.validation.js";
-import User from "./user.model.js";
-import bcrypt from "bcrypt";
-import validateReqBody from "../middleware/validate.req.body.js";
-import jwt from "jsonwebtoken";
+} from './user.validation.js';
+import User from './user.model.js';
+import bcrypt from 'bcrypt';
+import validateReqBody from '../middleware/validate.req.body.js';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
 // * register user
 router.post(
-  "/user/register",
+  '/user/register',
   async (req, res, next) => {
     // extract data from req.body
     const data = req.body;
@@ -37,7 +37,7 @@ router.post(
 
     // if user exists , throw error
     if (user) {
-      return res.status(409).send({ message: "Email already exists." });
+      return res.status(409).send({ message: 'Email already exists.' });
     }
     // hash password
     const plainPassword = newUser.password;
@@ -50,13 +50,13 @@ router.post(
     // sedn res
     return res
       .status(201)
-      .send({ message: "User is registered successfully." });
+      .send({ message: 'User is registered successfully.' });
   }
 );
 
 // * login
 router.post(
-  "/user/login",
+  '/user/login',
   validateReqBody(loginUserValidationSchema),
 
   async (req, res) => {
@@ -67,7 +67,7 @@ router.post(
     const user = await User.findOne({ email: loginCredentials.email });
     // if mot user ,throw error
     if (!user) {
-      return res.status(404).send({ message: "Invalid credentials." });
+      return res.status(404).send({ message: 'Invalid credentials.' });
     }
     // compare password usiong bcrypt
     const plainPassword = loginCredentials.password;
@@ -76,7 +76,7 @@ router.post(
 
     // if not password match,throw error
     if (!isPasswordMatch) {
-      return res.status(404).send({ message: "Invalid credentials." });
+      return res.status(404).send({ message: 'Invalid credentials.' });
     }
     user.password = undefined; // to hide password
     // generate access token
@@ -88,7 +88,48 @@ router.post(
     // send res
     return res
       .status(200)
-      .send({ message: "success", userDetails: user, accessToken: token });
+      .send({ message: 'success', userDetails: user, accessToken: token });
   }
 );
+
+// *list  registered users
+router.get('/user/list', async (req, res) => {
+  try {
+    // Fetch all users and exclude the password field
+    const users = await User.find().select('-password');
+    // Send response with the list of users
+    return res
+      .status(200)
+      .send({ message: 'Users fetched successfully.', users });
+  } catch (error) {
+    // Handle errors
+    return res
+      .status(500)
+      .send({ message: 'Failed to fetch users.', error: error.message });
+  }
+});
+
+// * delete user by ID
+router.delete('/user/delete/:id', async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    // Find and delete the user by ID
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    // If no user is found, return a 404 response
+    if (!deletedUser) {
+      return res.status(404).send({ message: 'User not found.' });
+    }
+
+    // Send success response
+    return res.status(200).send({ message: 'User deleted successfully.' });
+  } catch (error) {
+    // Handle errors
+    return res
+      .status(500)
+      .send({ message: 'Failed to delete user.', error: error.message });
+  }
+});
+
 export default router;
