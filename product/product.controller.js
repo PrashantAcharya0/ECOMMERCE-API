@@ -1,23 +1,23 @@
-import express from "express";
+import express from 'express';
 import {
   isBuyer,
   isSeller,
   isUser,
-} from "../middleware/authentication.middleware.js";
-import Product from "./product.model.js";
-import validateReqBody from "../middleware/validate.req.body.js";
+} from '../middleware/authentication.middleware.js';
+import Product from './product.model.js';
+import validateReqBody from '../middleware/validate.req.body.js';
 import {
   addProductValidationSchema,
   paginationDateValidationSchema,
-} from "./product.validation.js";
-import validateMongoIdFromParam from "../middleware/validate.mongo.id.js";
-import checkMongoIdsEquality from "../utlis/mongo.id.equality.js";
+} from './product.validation.js';
+import validateMongoIdFromParam from '../middleware/validate.mongo.id.js';
+import checkMongoIdsEquality from '../utlis/mongo.id.equality.js';
 
 const router = express.Router();
 
 // * add product
 router.post(
-  "/product/add",
+  '/product/add',
   isSeller,
   validateReqBody(addProductValidationSchema),
   async (req, res) => {
@@ -32,22 +32,22 @@ router.post(
     await Product.create(newProduct);
 
     // send res
-    return res.status(201).send("Adding product...");
+    return res.status(201).send('Adding product...');
   }
 );
 
 // * list all products
-router.get("/product/list", isUser, async (req, res) => {
+router.get('/product/list', isUser, async (req, res) => {
   // find all products
   const products = await Product.find();
 
   // send res
-  return res.status(200).send({ message: "success", productList: products });
+  return res.status(200).send({ message: 'success', productList: products });
 });
 
 // * delete product
 router.delete(
-  "/product/delete/:id",
+  '/product/delete/:id',
   isSeller,
   validateMongoIdFromParam,
   async (req, res) => {
@@ -59,7 +59,7 @@ router.delete(
 
     // if not product found, throw error
     if (!product) {
-      return res.status(404).send({ message: "Product does not exist." });
+      return res.status(404).send({ message: 'Product does not exist.' });
     }
     // check if loggedInUserId id owner of the product
     const isProductOwner = product.sellerId.equals(req.loggedInUserId);
@@ -69,20 +69,20 @@ router.delete(
     if (!isProductOwner) {
       return res
         .status(403)
-        .send({ message: "you are not owner of this product." });
+        .send({ message: 'you are not owner of this product.' });
     }
 
     // delete product
     await Product.findByIdAndDelete(productId);
 
     // send res
-    res.status(200).send({ message: "Product is deleted sucessfully." });
+    res.status(200).send({ message: 'Product is deleted sucessfully.' });
   }
 );
 
 // * edit product
 router.put(
-  "/product/edit/:id",
+  '/product/edit/:id',
   isSeller,
   validateMongoIdFromParam,
   validateReqBody(addProductValidationSchema),
@@ -95,7 +95,7 @@ router.put(
 
     // if not product, throw error
     if (!product) {
-      return res.status(404).send({ message: "Product does not exist." });
+      return res.status(404).send({ message: 'Product does not exist.' });
     }
 
     // check product ownership
@@ -108,7 +108,7 @@ router.put(
     if (!isProductOwner) {
       return res
         .status(403)
-        .send({ message: "you are not owner of this product." });
+        .send({ message: 'you are not owner of this product.' });
     }
 
     // extract new values from req.body
@@ -127,13 +127,13 @@ router.put(
     // await Product.findByIdAndDelete(productId, newValues);
 
     // send res
-    return res.status(200).send("Editing...");
+    return res.status(200).send('Editing...');
   }
 );
 
 // * get product details
 router.get(
-  "/product/detail/:id",
+  '/product/detail/:id',
   isUser,
   validateMongoIdFromParam,
   async (req, res) => {
@@ -148,19 +148,19 @@ router.get(
 
     // if not product , throw error
     if (!product) {
-      return res.status(400).send({ message: "Product does not exist." });
+      return res.status(400).send({ message: 'Product does not exist.' });
     }
 
     //send res
     return res
       .status(200)
-      .send({ message: "Product details...", productDetail: product });
+      .send({ message: 'Product details...', productDetail: product });
   }
 );
 
 // * list product by seller
 router.post(
-  "/product/seller/list",
+  '/product/seller/list',
   isSeller,
   validateReqBody(paginationDateValidationSchema),
   async (req, res) => {
@@ -174,7 +174,7 @@ router.post(
     let match = { sellerId: req.loggedInUserId };
 
     if (searchText) {
-      match.name = { $regex: searchText, $option: "i" };
+      match.name = { $regex: searchText, $option: 'i' };
     }
 
     const products = await Product.aggregate([
@@ -196,13 +196,13 @@ router.post(
 
     return res
       .status(200)
-      .send({ message: "seller list...", productList: products });
+      .send({ message: 'seller list...', productList: products });
   }
 );
 
 // * list product by buyer
 router.post(
-  "/product/buyer/list",
+  '/product/buyer/list',
   isBuyer,
   validateReqBody(paginationDateValidationSchema),
   async (req, res) => {
@@ -212,7 +212,7 @@ router.post(
     let match = {};
 
     if (searchText) {
-      match.name = { $regex: searchText, $option: "i" };
+      match.name = { $regex: searchText, $option: 'i' };
     }
 
     // calculate skip
@@ -238,7 +238,7 @@ router.post(
 
     return res
       .status(200)
-      .send({ message: "buyer list...", productList: products });
+      .send({ message: 'buyer list...', productList: products });
   }
 );
 export default router;
